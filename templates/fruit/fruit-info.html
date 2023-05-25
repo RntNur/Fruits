@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ fruit_item.name }}
+{% endblock %}
+
+{% block content %}
+    <p>Имя: {{ fruit_item.name }}</p>
+    <p>Описание: {{ fruit_item.description }}</p>
+    <p>Цена: {{ fruit_item.price }}</p>
+    <p>Дата создания: {{ fruit_item.date_create }}</p>
+    <p>Дата просрочки: {{ fruit_item.date_expired }}</p>
+
+    <a href="{% url 'list_fruit' %}" class="btn btn-info">Назад</a>
+{% endblock %}
+

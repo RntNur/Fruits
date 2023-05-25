@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Fruit inc
+{% endblock %}
+{% block content %}
+
+
+<h1>Hello template Django</h1>
+<a class="btn btn-primary" href="/fruit/fruitsList/">Каталог фруктов (абсолютный путь)</a> <br>
+<a class="btn btn-primary" href="fruitsList/">Каталог фруктов (относительный путь)</a> <br>
+<a class="btn btn-primary" href="fruit/fruitsList/">Каталог фруктов (относительный путь) (неправильный)</a> <br>
+<a class="btn btn-primary" href="/fruit/fruitsList/?id=2&name=авокадо">Каталог фруктов (с параметрами)</a> <br>
+
+
+    <h1>Текст для проверки статики</h1>
+{% endblock %}
