@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Изменение фрукта
+{% endblock %}
+{% block content %}
+     <div class="container text-center">
+        <div class="row align-items-center">
+            <div class="col">
+            <div class="form-floating mb-4">
+        <form method="post" enctype="multipart/form-data">
+           {% csrf_token %}
+              <table>
+                <div class="form-floating mb-4">
+                {{ form.as_table }}
+                </div>
+              </table>
+              <input class="btn btn-success" type="submit" value="Сохранить">
+                </form>
+            </div>
+            </div>
+        </div>
+     </div>
+{% endblock %}

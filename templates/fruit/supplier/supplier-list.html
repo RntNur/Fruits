@@ -15,18 +15,21 @@
         {{ info }}<br>
         <a class="btn btn-primary" href="{% url 'add_supp_view' %}">Добавить поставщика</a>
 
+        <div class="container text-center">
+            <div class="row align-items-center">
+                <div class="col">
+                {% for item in page_obj.object_list %}
+                    <div class="card" style="width: 18rem;">
 
-        <div>
-            {% for item in page_obj.object_list %}
-                <div class="card" style="width: 18rem;">
-
-                    <div class="card-body">
-                        <h5 class="card-title">{{ item.title }}</h5>
-                        {#  <a href="{% url 'info_supp_view' item.pk %}" class="btn btn-primary">Подробнее</a>#}
-                        <a href="{{ item.get_absolute_url }}" class="btn btn-primary">Подробнее</a>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ item.title }}</h5>
+                            {#  <a href="{% url 'info_supp_view' item.pk %}" class="btn btn-primary">Подробнее</a>#}
+                            <a href="{{ item.get_absolute_url }}" class="btn btn-primary">Подробнее</a>
+                        </div>
                     </div>
-                </div>
-
+                  </div>
+              </div>
+            </div>
             {% endfor %}
         </div>
         {% if page_obj.has_other_pages %}

@@ -1,4 +1,6 @@
 from django import forms
+from django.forms import DateInput
+
 from .models import Fruit, Supplier, Order, Pos_order, Chegue
 import re
 from django.core.exceptions import ValidationError
@@ -7,31 +9,53 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 
 
-class FruitForm(forms.Form):
-    name = forms.CharField(
-        max_length=50,
-        min_length=2,
-        strip=True,
-        label='Название фрукта')
-    description = forms.CharField(
-        max_length=150,
-        min_length=2,
-        strip=True,
-        label='Описание фрукта',
-        initial="Описание",
-        widget=forms.Textarea)
-    price = forms.FloatField(
-        min_value=1,
-        # step_size=10,
-        label='Цена фрукта',
-        initial=40)
-    date_expired = forms.DateField(
-        label='Дата просрочки фрукта',
-        # widget=forms.SelectDateWidget,
-        help_text='Укажите дату просрочки указанную на упаковке')
-    photo = forms.ImageField(
-        required=False,
-        label='Фотография фрукта')
+class CustomDateInput(DateInput):
+    def __init__(self, attrs=None):
+        if attrs is None:
+            attrs = {}
+        attrs['type'] = 'date'
+        attrs['class'] = 'form-control'
+        attrs['use_required_attribute'] = True # добавляем нужный атрибут
+        super().__init__(attrs)
+
+
+class FruitForm(forms.ModelForm):
+    class Meta:
+        model = Fruit
+        fields = ['name', 'description', 'price', 'date_expired', 'photo', 'supplier']
+
+        widgets = {
+            'name': forms.TextInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Название фрукта'
+                }
+            ),
+            'description': forms.Textarea(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Описание фрукта'
+                }
+            ),
+            'price': forms.NumberInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Цена фрукта'
+                }
+            ),
+            'date_expired': CustomDateInput(),
+            'photo': forms.ClearableFileInput(
+                attrs={
+                    'class': 'form-control-file'
+                }
+            )
+        }
+
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        if re.match(r'\d', name):
+            raise ValidationError('Поле не должно начинаться с цифры')
+        return name
 
     # required=True - обязательное поле
     # max_length - Максимальная длина текста

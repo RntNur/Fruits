@@ -4,7 +4,7 @@
             страница</a></li>
         <li class="nav-item"><a href="{% url 'list_fruit' %}" class="nav-link">Список фруктов</a></li>
         <li class="nav-item"><a href="{% url 'add_fruit' %}" class="nav-link">Добавить фрукт</a></li>
-        <li class="nav-item"><a href="{% url 'list_supp' %}" class="nav-link">Поставщики</a></li>
+        <li class="nav-item"><a href="{% url 'list_supp_view' %}" class="nav-link">Поставщики</a></li>
         <li class="nav-item"><a href="{% url 'contact_email' %}" class="nav-link">Отправить письмо</a></li>
         {% if request.user.is_anonymous %}
             <li class="nav-item"><a href="{% url 'log in' %}" class="nav-link">Авторизация</a></li>

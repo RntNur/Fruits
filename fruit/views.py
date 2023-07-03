@@ -1,29 +1,24 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse, HttpResponseRedirect
-
-from .models import Fruit, Supplier, Order, Pos_order, Chegue
-from .forms import FruitForm, SupplierForm, RegistrationForm, LoginForm, ContactForm
-
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from .utils import Default_value
-from django.urls import reverse, reverse_lazy
-
-from django.core.paginator import Paginator
-
+from django.conf import settings
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required, permission_required
-from django.utils.decorators import method_decorator
-
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.mail import send_mail, send_mass_mail
-from django.conf import settings
-
-from django.http import JsonResponse
-from .serializers import FruitSerializer
-
-from rest_framework import status
-from rest_framework.response import Response
+from django.core.paginator import Paginator
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse, reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from rest_framework import status, viewsets
 from rest_framework.decorators import api_view
-from rest_framework import viewsets
+from rest_framework.response import Response
+
+from .forms import FruitForm, SupplierForm, RegistrationForm, LoginForm, ContactForm
+from .models import Fruit, Supplier, Order, Pos_order, Chegue
+from .serializers import FruitSerializer
+from .utils import Default_value
+
 
 # Create your views here.
 
@@ -31,16 +26,69 @@ def index(request):
     print(request)
     return HttpResponse('Hello Django')
 
+def index_template(request):
+    return render(request, 'fruit/index.html')
 
-def fruit(request):
-    fruits = Fruit.objects.all()  # Возврат всех записей из БД
-    responce = '<h1>Список фруктов</h1>'
-    for item in fruits:
-        responce += f'<div>\n<p>{item.name}</p>\n<p>{item.price}</p></div>'
-    # responce += '<h3>Banana</h3>'
-    # responce += '<h4>Avocado</h4>'
-    return HttpResponse(responce)
+class FruitsList(ListView):
+    model = Fruit
+    template_name = 'fruit/fruit-all.html'
+    context_object_name = 'fruit_list'
+    extra_context = {'title': 'Cписок фруктов'}
 
+class FruitsDetail(DetailView):
+    model = Fruit
+    template_name = 'fruit/fruit-info.html'
+    context_object_name = 'fruit_item'
+    extra_context = {'title': 'Подробнее о фрукте'}
+    success_url = reverse_lazy('fruit_edit')
+
+    def get_success_url(self):
+        pk = self.kwargs.get('pk')
+
+
+class FruitsAdd(CreateView):
+    model = Fruit
+    form_class = FruitForm
+    template_name = 'fruit/fruit-add.html'
+    extra_context = {'title': 'Добавление фрукта'}
+    success_url = reverse_lazy('list_fruit')
+
+    def form_valid(self, form):  # обработка полученного в форме изображения
+        fruitform = form.save(commit = False)
+        if form.cleaned_data['photo']:
+            file = self.request.FILES.get('photo')  # получаем объект файла из запроса
+            if file:  # если файл был загруже
+                file_name = default_storage.save(file.name, ContentFile(file.read()))
+                fruitform.photo = file_name  # передаем в качестве пути
+        fruitform.save()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['add_fruit'] = self.form_class()
+        return context
+
+
+class FruitsUpdate(UpdateView):
+    model = Fruit
+    form_class = FruitForm
+    template_name = 'fruit/fruit-edit.html'
+    context_object_name = 'fruit_edit'
+    extra_context = {'title': 'Изменение фрукта'}
+
+    def get_success_url(self):
+        pk = self.kwargs.get('pk')
+        return reverse_lazy('one_fruit', args = [pk])
+
+    def form_valid(self, form):  # обработка полученного в форме изображения
+        fruitform = form.save(commit = False)
+        if form.cleaned_data['photo']:
+            file = self.request.FILES.get('photo')  # получаем объект файла из запроса
+            if file:  # если файл был загруже
+                file_name = default_storage.save(file.name, ContentFile(file.read()))
+                fruitform.photo = file_name  # передаем в качестве пути
+        fruitform.save()
+        return super().form_valid(form)
 
 def index_template(request):
     return render(request, 'fruit/index.html')
@@ -128,12 +176,6 @@ def fruit_detail(request, fruit_id):
 
 
 # Supplier----------------------------------------------------------------
-def supplier_list(request):
-    suppliers = Supplier.objects.filter(exist=True).order_by('title')
-    return render(request, 'fruit/supplier/supplier-list.html',
-                  {'supplier': suppliers, 'title': 'Список поставщиков из функции'})
-
-
 class SupplierListView(ListView, Default_value):
     model = Supplier  # Определение таблицы для взаимодействия
     template_name = 'fruit/supplier/supplier-list.html'  # путь шаблона (<Имя приложения>/<Имя модели-list.html>)
@@ -168,33 +210,33 @@ class SupplierDetailView(DetailView):
     pk_url_kwarg = 'supplier_id'  # Переопределение ключа ID при получении (pk)
 
 
-def supplier_form(request):
-    if request.method == "POST":
-        form = SupplierForm(request.POST)
-        if form.is_valid():
-            print(form.cleaned_data)
-
-            Supplier.objects.create(
-                title=form.cleaned_data['title'],
-                agent_name=form.cleaned_data['agent_name'],
-                agent_firstname=form.cleaned_data['agent_firstname'],
-                agent_patronymic=form.cleaned_data['agent_patronymic'],
-                exist=form.cleaned_data['exist'],
-            )
-            # ==
-            # Supplier.objects.create(
-            #     **form.cleaned_data
-            # )
-            # return HttpResponseRedirect('/fruit/supplier/add/') # в методе указ. URL-адрес
-
-            return redirect('list_supp')  # В методе указывается URL-адрес, название пути, модель
-        else:
-            context = {'form': form}
-            return render(request, 'fruit/supplier/supplier-add.html', context)
-    else:
-        form = SupplierForm()
-        context = {'form': form}
-        return render(request, 'fruit/supplier/supplier-add.html', context)
+# def supplier_form(request):
+#     if request.method == "POST":
+#         form = SupplierForm(request.POST)
+#         if form.is_valid():
+#             print(form.cleaned_data)
+#
+#             Supplier.objects.create(
+#                 title=form.cleaned_data['title'],
+#                 agent_name=form.cleaned_data['agent_name'],
+#                 agent_firstname=form.cleaned_data['agent_firstname'],
+#                 agent_patronymic=form.cleaned_data['agent_patronymic'],
+#                 exist=form.cleaned_data['exist'],
+#             )
+#             # ==
+#             # Supplier.objects.create(
+#             #     **form.cleaned_data
+#             # )
+#             # return HttpResponseRedirect('/fruit/supplier/add/') # в методе указ. URL-адрес
+#
+#             return redirect('list_supp')  # В методе указывается URL-адрес, название пути, модель
+#         else:
+#             context = {'form': form}
+#             return render(request, 'fruit/supplier/supplier-add.html', context)
+#     else:
+#         form = SupplierForm()
+#         context = {'form': form}
+#         return render(request, 'fruit/supplier/supplier-add.html', context)
 
 
 class SupplierCreateView(CreateView):
@@ -272,7 +314,7 @@ def contact_email(request):
                 form.cleaned_data['subject'],
                 form.cleaned_data['content'],
                 settings.EMAIL_HOST_USER,
-                ['michaelvasilen@mail.ru'],
+                ['r.r.nurullin@gmail.com'],
                 fail_silently=False
             )
             if mail:

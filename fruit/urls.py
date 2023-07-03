@@ -3,16 +3,15 @@ from django.urls import path
 from fruit.views import *
 
 urlpatterns = [
-    path('', index_template, name='index_Fruit'),
-    path('list/', fruit_template, name='list_fruit'),
+    path('', index_template, name = 'index_Fruit'),
+    path('login/', user_login, name='log in'),
     path('httpresponse/', index),
-    path('add/', fruit_add, name='add_fruit'),
-    path('list/<int:fruit_id>/', fruit_detail, name='one_fruit'),
 
-    # Supplier
-    path('supplier/list/', supplier_list, name='list_supp'),
-    path('supplier/add/', supplier_form, name='add_supp'),
-    # Supplier class View
+    path('fruitslist/', FruitsList.as_view(), name = 'list_fruit'),
+    path('list/<int:pk>/', FruitsDetail.as_view(), name = 'one_fruit'),
+    path('list/<int:pk>/edit', FruitsUpdate.as_view(), name = 'fruit_edit'),
+    path('add/', FruitsAdd.as_view(), name = 'add_fruit'),
+
     # LISTVIEW
     path('supplier/view/list/', SupplierListView.as_view(), name='list_supp_view'),
 
@@ -26,7 +25,7 @@ urlpatterns = [
     path('supplier/view/del/<int:pk>', SupplierDeleteView.as_view(), name='del_supp_view'),
 
     path('registration/', user_registration, name='regis'),
-    path('login/', user_login, name='log in'),
+
     path('logout/', user_logout, name='log out'),
 
     path('email/', contact_email, name='contact_email'),
